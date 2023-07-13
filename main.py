@@ -43,6 +43,7 @@ y_pred = np.array([x[0] for x in FAInance_model.predict(test_X_reshaped)])
 FAInance_model.plot_results(y_pred, y_test)
 
 
+# this strategy is bullshit but run it if u want
 def strategy(y_pred, y_test, budget):
     portfolio = budget
     bought = 0
