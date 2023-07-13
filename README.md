@@ -1,2 +1,2 @@
 # AINance
-Part-time neural network full time predictor
+Part-time neural network full-time predictor
