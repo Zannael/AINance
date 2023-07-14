@@ -13,12 +13,12 @@ from matplotlib import pyplot as plt
 
 class FAInance:
     def __init__(self, df):
-        initializer = tf.keras.initializers.GlorotNormal(seed=45656)
+        initializer = tf.keras.initializers.GlorotNormal(seed=35)
         self.df = df
 
         # Define the Keras model
         self.model = Sequential()
-        self.model.add(LSTM(64, input_shape=(1, 1), return_sequences=True))
+        self.model.add(LSTM(64, input_shape=(1, 2), return_sequences=True))
         self.model.add(LSTM(32, return_sequences=True))
         self.model.add(LSTM(16))
         self.model.add(Dense(128, activation='relu', kernel_initializer=initializer,
@@ -52,8 +52,8 @@ class FAInance:
         # saves the best model out of the result of each epoch (not the last!)
         checkpoint = ModelCheckpoint('models/best_try.h5', monitor='val_loss', save_best_only=True, mode='min', verbose=0)
 
-        # after 10 epochs in which loss is stable (doesn't decrease) it stops the training
-        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+        # after <patience> epochs in which loss is stable (doesn't decrease) it stops the training
+        early_stopping = EarlyStopping(monitor='val_loss', patience=7, restore_best_weights=True)
 
         # learning reate dynamic tweaks to make the model gradient descent smoother
         learning_rate_scheduler = LearningRateScheduler(self.lr_scheduler)
@@ -111,7 +111,7 @@ class FAInance:
         xpositions = range(len(self.df['Date'][-len(y_pred):]))
         xlabels = self.df['Date'][-len(y_pred):]
         plt.plot(self.df['Date'][-len(y_pred):], y_pred)
-        plt.xticks(xpositions[::7], xlabels[::7], rotation='vertical')
+        plt.xticks(xpositions[::2], xlabels[::2], rotation='vertical')
         # Adding labels and title
         plt.xlabel('Day')
         plt.ylabel('Value')
@@ -124,31 +124,13 @@ class FAInance:
         xpositions = range(len(self.df['Date'][-len(y_test):]))
         xlabels = self.df['Date'][-len(y_test):]
         plt.plot(self.df['Date'][-len(y_test):], y_test)
-        plt.xticks(xpositions[::7], xlabels[::7], rotation='vertical')
+        plt.xticks(xpositions[::2], xlabels[::2], rotation='vertical')
         # Adding labels and title
         plt.xlabel('Day')
         plt.ylabel('Value')
         plt.title('Real BTC-USD Trend')
         plt.tight_layout()
 
-        plt.show()
-
-        # Set up the plot
-        fig, ax = plt.subplots(figsize=(10, 6))
-
-        # Plot the data
-        ax.scatter(self.df['Date'][-len(y_pred):], y_pred)
-
-        # Adjust the plot
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.tick_params(axis='both', which='both', length=6, width=1)
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_title('Scatter Plot')
-
-        # Show the plot
-        plt.tight_layout()
         plt.show()
 
     # This basically doesn't have so much sense because the best model is already saved by using

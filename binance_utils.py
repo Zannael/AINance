@@ -34,7 +34,7 @@ def download(title, start_date, end_date):
     df['dateTime'] = df['dateTime'].apply(convert)
 
     # Keep only specific columns
-    columns_to_keep = ['dateTime', 'open', 'high', 'low', 'close', 'volume']
+    columns_to_keep = ['dateTime', 'close', 'volume']
     df = df.loc[:, columns_to_keep]
 
     # Rename column names
