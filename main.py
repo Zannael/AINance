@@ -1,10 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import asyncio
 
 from utils import shift_dataset, data_preparation
 from model import FAInance
+from binance_utils import connect, download
 
+# # Uncomment to redownload locally the whole available dataset
+# download("BTCUSDT", "2017-01-08", "2023-07-14")
 
+# # Uncomment (and modify connect) to retrieve real time data
+# coroutine = connect()
+# asyncio.run(coroutine)
+
+# THIS HAS NO MEANING TO EXIST ANYMORE, DON'T UNCOMMENT, DON'T USE
 # # Uncomment to clean separator for investing datasets (first run!)
 # from utils import clean_separator
 # clean_separator()
@@ -17,17 +26,18 @@ from model import FAInance
 # from utils import get_dataset
 # get_dataset()
 
-df = shift_dataset('data/full.csv', days=1)
+df = shift_dataset('data/binance_data/clean.csv', days=7)
 
 sub_df, X_train, y_train, X_val, y_val, X_test, y_test, train_X_reshaped, valid_X_reshaped, test_X_reshaped = data_preparation(df)
+
+# # Uncomment to train a new model
+# FAInance_model = FAInance(df)
 #
-FAInance_model = FAInance(df)
-
-FAInance_model.train(train_X_reshaped, y_train, valid_X_reshaped, y_val, epochs=100, lr=0.01)
-
-# FAInance_model.plot_history()
-
-FAInance_model.save()    # default to models/try.h5
+# FAInance_model.train(train_X_reshaped, y_train, valid_X_reshaped, y_val, epochs=100, lr=0.01)
+#
+# # FAInance_model.plot_history()
+#
+# FAInance_model.save()
 
 FAInance_model = FAInance.load(path="models/best_try.h5")
 
@@ -40,7 +50,7 @@ y_pred = np.array([x[0] for x in FAInance_model.predict(test_X_reshaped)])
 #     print(sub_df['Date'].tolist()[-len(y_pred) + i])
 #     print("Rispetto al giorno prima:", "sale" if y_pred[i] > y_pred [i-1] else "scende")
 
-FAInance_model.plot_results(y_pred, y_test)
+# FAInance_model.plot_results(y_pred, y_test)
 
 
 # this strategy is bullshit but run it if u want
@@ -89,8 +99,8 @@ def strategy(y_pred, y_test, budget):
     return txs, perse, portfolio + bought * current_price
 
 
-# txs, perse, portfolio = strategy(y_pred, y_test, 100)
-#
-# print("Numero di transazioni:", txs)
-# print("Numero di transazioni perse:", perse)
-# print("Budget finale:", portfolio)
+txs, perse, portfolio = strategy(y_pred, y_test, 100)
+
+print("Numero di transazioni:", txs)
+print("Numero di transazioni perse:", perse)
+print("Budget finale:", portfolio)

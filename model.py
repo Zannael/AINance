@@ -18,7 +18,7 @@ class FAInance:
 
         # Define the Keras model
         self.model = Sequential()
-        self.model.add(LSTM(64, input_shape=(1, 6), return_sequences=True))
+        self.model.add(LSTM(64, input_shape=(1, 1), return_sequences=True))
         self.model.add(LSTM(32, return_sequences=True))
         self.model.add(LSTM(16))
         self.model.add(Dense(128, activation='relu', kernel_initializer=initializer,
@@ -49,8 +49,13 @@ class FAInance:
         # compile the model
         self.model.compile(optimizer=Adam(learning_rate=lr), loss=loss, metrics=['mae'])
 
+        # saves the best model out of the result of each epoch (not the last!)
         checkpoint = ModelCheckpoint('models/best_try.h5', monitor='val_loss', save_best_only=True, mode='min', verbose=0)
+
+        # after 10 epochs in which loss is stable (doesn't decrease) it stops the training
         early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+        # learning reate dynamic tweaks to make the model gradient descent smoother
         learning_rate_scheduler = LearningRateScheduler(self.lr_scheduler)
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=5, verbose=0)
 
@@ -128,8 +133,29 @@ class FAInance:
 
         plt.show()
 
+        # Set up the plot
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Plot the data
+        ax.scatter(self.df['Date'][-len(y_pred):], y_pred)
+
+        # Adjust the plot
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.tick_params(axis='both', which='both', length=6, width=1)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_title('Scatter Plot')
+
+        # Show the plot
+        plt.tight_layout()
+        plt.show()
+
+    # This basically doesn't have so much sense because the best model is already saved by using
+    # ModelCheckpoint before fitting.
     def save(self, path="models/try.h5"): self.model.save(path)
 
+    # Loads a model
     @staticmethod
     def load(path="models/try.h5"):
         f = FAInance(pd.read_csv("data/clean.csv"))

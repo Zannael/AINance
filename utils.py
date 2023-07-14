@@ -250,7 +250,7 @@ def data_preparation(df):
     # df = df.sample(frac=1, random_state=123)
 
     # We split between features and target variable
-    X = df[['Old_Price_BTCUSD', 'Price_IXIC', 'Price_MSTR', 'Price_NVDA', 'Price_ICE', 'Price_JPM']]
+    X = df[['Old_Price_BTCUSD']]  # , 'Price_IXIC', 'Price_MSTR', 'Price_NVDA', 'Price_ICE', 'Price_JPM']]
     y = df['Price_BTCUSD']
 
     # this will contain "Buy" "Sell" labels that we DON'T use now but
