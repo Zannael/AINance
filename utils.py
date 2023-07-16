@@ -4,7 +4,7 @@ import glob
 import os.path
 import pandas as pd
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 from datetime import datetime, timedelta
@@ -231,17 +231,17 @@ def shift_dataset(path, days=7):
 
 # This function prepares data for NN input. Reshapes for LSTM, splits
 # for train validation and testing and so on
-def data_preparation(df):
+def data_preparation(df, start_date='2014-01-01', end_date='2023-07-15'):
     # Split the data into features (X) and target variable (y)
     # Convert 'Date' column to datetime type
     df['Date'] = pd.to_datetime(df['Date'])
 
     # Define start and end dates for the subset
-    start_date = '2014-01-01'
+    start_date = start_date
     # I keep a whole month of further testing data to be sure NN never saw these
     # Besides, this dataset will be shuffled, so is useful to keep some never-seen ordered data
     # to test the network outputs with a trading strategy
-    end_date = '2023-07-15'
+    end_date = end_date
 
     # Subset the dataframe based on the date range
     df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
@@ -322,3 +322,78 @@ def data_preparation(df):
     test_X_reshaped = np.reshape(X_test, (X_test.shape[0], 1, X_test.shape[1]))
 
     return df, X_train, y_train, X_val, y_val, X_test, y_test, train_X_reshaped, valid_X_reshaped, test_X_reshaped
+
+
+def strategy(y_test, y_pred):
+    def calculate_trend(true_prices, pred_prices):
+        intervals = []
+        true_intervals = []
+
+        for i in range(0, len(pred_prices), 15):
+            if i + 15 < len(pred_prices): intervals.append(pred_prices[i: i + 15])
+            else: intervals.append(pred_prices[i:])
+
+        for i in range(0, len(true_prices), 15):
+            if i + 15 < len(true_prices): true_intervals.append(true_prices[i: i + 15])
+            else: true_intervals.append(true_prices[i:-1])
+
+        slopes_for_avg = []
+        slopes = []
+        for i in range(len(intervals)):
+            interval = intervals[i]
+            # Create an array of x-values (assuming equal spacing)
+            x = np.arange(len(interval))
+
+            # Fit a 1st-degree polynomial (a straight line) to the data
+            coefficients = np.polyfit(x, interval, 1)
+            slopes.append(coefficients[0])
+            slopes_for_avg.append(abs(coefficients[0]))
+
+        threshold = np.average(slopes_for_avg) * 0.4
+
+        corr = 0
+        wrong = 0
+        skipped = 0
+        budget = 1000
+        bought = 0
+        slope_w = []
+        slope_r = []
+
+        for i in range(len(intervals)):
+            t_x = np.arange(len(true_intervals[i]))
+
+            slope = slopes[i]
+
+            true_coeffs = np.polyfit(t_x, true_intervals[i], 1)
+            true_slope = true_coeffs[0]
+
+            if slope > 0 and slope > threshold:
+                if true_slope > 0:
+                    corr += 1
+                    slope_r.append(slope)
+                else:
+                    wrong += 1
+                    slope_w.append(slope)
+
+            elif slope < 0 and abs(slope) > threshold:
+                if true_slope < 0:
+                    slope_r.append(slope)
+                    corr += 1
+                else:
+                    slope_w.append(slope)
+                    wrong += 1
+
+            else: skipped += 1
+
+        return corr, wrong, skipped, budget + bought, np.average(slope_r), np.average(slope_w)
+
+    c, w, s, bu, slr, slw = calculate_trend(y_test, y_pred)
+    print("Totale:", c + w)
+    print("Corrette:", c)
+    print("Sbagliate:", w)
+    print("Non giocate:", s)
+    print("Budget finale", bu)
+    print("Pendenza media quando azzecca", slr)
+    print("Pendenza media quando sbaglia", slw)
+
+    return

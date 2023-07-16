@@ -6,6 +6,8 @@ from binance import AsyncClient, BinanceSocketManager
 
 
 async def connect():
+    import time
+
     client = Client()
     bm = BinanceSocketManager(client)
     ts = bm.kline_socket('BTCUSDT')
@@ -29,7 +31,7 @@ def download(title, start_date, end_date):
 
     client = Client()
 
-    req = client.get_historical_klines(title, Client.KLINE_INTERVAL_15MINUTE, start_date, end_date)
+    req = client.get_historical_klines(title, Client.KLINE_INTERVAL_1MINUTE, start_date, end_date)
     df = pd.DataFrame(req, columns=['dateTime', 'open', 'high', 'low', 'close', 'volume', 'closeTime', 'quoteAssetVolume', 'numberOfTrades', 'takerBuyBaseVol', 'takerBuyQuoteVol', 'ignore'])
     df['dateTime'] = df['dateTime'].apply(convert)
 
@@ -40,4 +42,4 @@ def download(title, start_date, end_date):
     # Rename column names
     df = df.rename(columns={'dateTime': 'Date', 'close': 'Price_BTCUSD'})
 
-    df.to_csv("data/binance_data/clean.csv", index=False)
+    df.to_csv("data/binance_data/clean_1MIN.csv", index=False)
